@@ -19,12 +19,14 @@ class MoviesController < ApplicationController
 
     if params[:sort] != session[:sort]
       session[:sort] = sort
+      flash.keep
       redirect_to :sort => sort, :ratings => @selected_ratings and return
     end
 
     if params[:ratings] != session[:ratings] and @selected_ratings != {}
       session[:sort] = sort
       session[:ratings] = @selected_ratings
+      flash.keep
       redirect_to :sort => sort, :ratings => @selected_ratings and return
     end
     @movies = Movie.find_all_by_rating(@selected_ratings.keys, ordering)
@@ -49,6 +51,15 @@ class MoviesController < ApplicationController
     @movie.update_attributes!(params[:movie])
     flash[:notice] = "#{@movie.title} was successfully updated."
     redirect_to movie_path(@movie)
+  end
+  
+  def similar_movies
+    @movie = Movie.find params[:id]
+    @movies = @movie.find_movies_with_same_director
+    if @movies.nil?
+      flash[:warning] = "'#{@movie.title}' has no director info"
+      redirect_to movies_path
+    end
   end
 
   def destroy
